@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 void main() {
   runApp(MyApp());
@@ -15,99 +18,49 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class HomePage extends StatelessWidget with WidgetsBindingObserver {
+class HomePage extends StatelessWidget {
+  Future<Map<String, dynamic>> ambilData() async {
+    try {
+      var hasilGet = await http.get(Uri.parse('https://reqres.in/api/users/2'), headers: {
+          "Content-Type": "application/json",
+          "x-api-key": "reqres-free-v1",
+        },);
 
-  HomePage() {
-    WidgetsBinding.instance.addObserver(this);
-  }
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    print(state);
-    super.didChangeAppLifecycleState(state);
+        if(hasilGet.statusCode >= 200 && hasilGet.statusCode < 300){
+          var data = (json.decode(hasilGet.body)["data"] as Map<String, dynamic>);
+        return data;
+        } else {
+          throw (hasilGet.statusCode);
+        }
+    } catch (err) {
+      throw (err);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar());
+      appBar: AppBar(
+        title: Text('Future Builder'),
+      ),
+      body: FutureBuilder(future: ambilData(), builder: (context, snapshot) {
+        if(snapshot.error != null){
+          return Center(child: Text("${snapshot.error}", style: TextStyle(fontSize: 25)),);
+        }
+
+
+        if(snapshot.connectionState == ConnectionState.waiting){
+          return Center(child: CircularProgressIndicator(),);
+        } else { return Column(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            Text("${snapshot.data?["first_name"]}", style: TextStyle(fontSize: 25),)
+          ],
+        );
+        }
+         
+      }),
+      floatingActionButton: FloatingActionButton(onPressed: ambilData),
+    );
   }
 }
-
-// class HomePage extends StatefulWidget {
-//   const HomePage({super.key});
-
-//   @override
-//   State<HomePage> createState() => _HomePageState();
-// }
-
-// class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
-
-//   int number = 0;
-
-//   @override
-//   void initState() {
-//     WidgetsBinding.instance.addObserver(this);
-//     super.initState();
-//   }
-
-//   @override
-//   void didChangeAppLifecycleState(AppLifecycleState state) {
-//     print(state);
-//    switch (state) {
-//       case AppLifecycleState.resumed:
-//         setState(() {
-//           number = -20;
-//         });
-//         break;
-//       case AppLifecycleState.inactive:
-//         setState(() {
-//           number = 99;
-//         });
-//         break;
-//       case AppLifecycleState.paused:
-//         print("App is in Paused State");
-//         break;
-//       case AppLifecycleState.detached:
-//         print("App is in Detached State");
-//         break;
-//       default:
-//     }
-//     super.didChangeAppLifecycleState(state);
-//   }
-
-//   @override
-//   void didChangeDependencies() {
-//     print(number);
-//     super.didChangeDependencies();
-//   }
-
-//   @override
-//   void dispose() {
-//     WidgetsBinding.instance.removeObserver(this);
-//     super.dispose();
-//   }
-
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: Text("COUNTER"),
-//       ),
-//       body: Center(
-//         child: Text(
-//           "${number}",
-//           style: TextStyle(fontSize: 35),
-//         ),
-//       ),
-//       floatingActionButton: FloatingActionButton(
-//         onPressed: () {
-//           setState(() {
-//             number++;
-//           });
-//         },
-//         child: Icon(Icons.add),
-//       ),
-//     );
-//   }
-// }
